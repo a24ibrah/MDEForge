@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 
-import org.antlr.foruse.grammar.v3.ANTLRParser.throwsSpec_return;
 import org.bson.types.ObjectId;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.emf.common.util.Diagnostic;
@@ -68,18 +67,12 @@ import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
 import org.eclipse.ocl.expressions.OCLExpression;
 import org.eclipse.ocl.helper.OCLHelper;
 import org.mdeforge.business.BusinessException;
-import org.mdeforge.business.ContainmentRelationService;
-import org.mdeforge.business.CosineSimilarityRelationService;
-import org.mdeforge.business.DiceSimilarityRelationService;
 import org.mdeforge.business.EcoreMetamodelService;
 import org.mdeforge.business.ExtractContentEngineException;
 import org.mdeforge.business.MetricEngineException;
-import org.mdeforge.business.ProjectService;
 import org.mdeforge.business.RequestGrid;
 import org.mdeforge.business.ResponseGrid;
-import org.mdeforge.business.SimilarityRelationService;
 import org.mdeforge.business.ValuedRelationService;
-import org.mdeforge.business.WorkspaceService;
 import org.mdeforge.business.importer.impl.EcoreMetamodelImporterServiceImpl;
 import org.mdeforge.business.model.AggregatedIntegerMetric;
 import org.mdeforge.business.model.AggregatedRealMetric;
@@ -114,11 +107,6 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
 import org.springframework.stereotype.Service;
 
-import uk.ac.shef.wit.simmetrics.similaritymetrics.DiceSimilarity;
-import anatlyzer.atl.util.ATLSerializer;
-import anatlyzer.atlext.ATL.ATLPackage;
-import anatlyzer.atlext.OCL.OclExpression;
-
 import com.apporiented.algorithm.clustering.ClusteringAlgorithm;
 import com.apporiented.algorithm.clustering.DefaultClusteringAlgorithm;
 import com.apporiented.algorithm.clustering.SingleLinkageStrategy;
@@ -126,15 +114,17 @@ import com.apporiented.algorithm.clustering.visualization.DendrogramPanel;
 import com.google.common.collect.Lists;
 import com.mongodb.Mongo;
 
+import anatlyzer.atl.util.ATLSerializer;
+import anatlyzer.atlext.ATL.ATLPackage;
+import anatlyzer.atlext.OCL.OclExpression;
+import uk.ac.shef.wit.simmetrics.similaritymetrics.DiceSimilarity;
+
 @Service
 public class EcoreMetamodelServiceImpl extends
 		CRUDArtifactServiceImpl<EcoreMetamodel> implements
 		EcoreMetamodelService {
 
-	@Autowired
-	private ProjectService projectService;
-	@Autowired
-	private WorkspaceService workspaceService;
+	
 	@Autowired
 	private Mongo mongo;
 	@Autowired
@@ -147,14 +137,7 @@ public class EcoreMetamodelServiceImpl extends
 	private MetricRepository metricRepository;
 	@Autowired
 	private RelationService relationService;
-	@Autowired
-	private SimilarityRelationService similarityRelationService;
-	@Autowired
-	private DiceSimilarityRelationService diceSimilarityRelationService;
-	@Autowired
-	private ContainmentRelationService containmentRelationService;
-	@Autowired
-	private CosineSimilarityRelationService cosineSimilarityRelationService;
+
 
 	@Value("#{cfgproperties[basePath]}")
 	protected String basePath;
@@ -201,7 +184,7 @@ public class EcoreMetamodelServiceImpl extends
 				.getExtensionToFactoryMap()
 				.put("*", new XMIResourceFactoryImpl());
 		Resource load_resource = load_resourceSet.getResource(
-				URI.createURI(sourceURI), true);
+				URI.createURI("file:///" + sourceURI), true);
 
 		EList<EObject> contents = load_resource.getContents();
 		String result = ResourceSerializer.serialize(load_resource);
@@ -265,7 +248,7 @@ public class EcoreMetamodelServiceImpl extends
 		 */
 		try {
 			IReferenceModel outputMetamodel = modelFactory.newReferenceModel();
-			injector.inject(outputMetamodel, basePath + "Metric.ecore");
+			injector.inject(outputMetamodel, "file:///" + basePath + "Metric.ecore");
 			IReferenceModel inputMetamodel = modelFactory.newReferenceModel();
 			injector.inject(inputMetamodel,
 					org.eclipse.emf.ecore.EcorePackage.eNS_URI);
@@ -279,7 +262,7 @@ public class EcoreMetamodelServiceImpl extends
 			transformationLauncher.launch(ILauncher.RUN_MODE, null,
 					new HashMap<String, Object>(),
 					(Object[]) getModulesList(basePath + "EcoreMetric.asm"));
-			extractor.extract(outModel, basePath + "sampleCompany_Cut.xmi");
+			extractor.extract(outModel, "file:///" + basePath + "sampleCompany_Cut.xmi");
 			EMFModelFactory emfModelFactory = (EMFModelFactory) modelFactory;
 			emfModelFactory.unload((EMFReferenceModel) inputMetamodel);
 			emfModelFactory.unload((EMFReferenceModel) outputMetamodel);
@@ -322,7 +305,7 @@ public class EcoreMetamodelServiceImpl extends
 		// Obtain a new resource set
 		ResourceSet resSet = new ResourceSetImpl();
 		// Create a resource
-		Resource resource = resSet.createResource(URI.createURI(path));
+		Resource resource = resSet.createResource(URI.createURI("file://" + path));
 		try {
 			resource.load(null);
 		} catch (IOException e) {

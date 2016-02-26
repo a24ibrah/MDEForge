@@ -248,10 +248,10 @@ public class ATLTransformationServiceImpl extends
 		try {
 
 			IReferenceModel outputMetamodel = modelFactory.newReferenceModel();
-			injector.inject(outputMetamodel, basePath + "Metric.ecore");
+			injector.inject(outputMetamodel, "file:///" + basePath + "Metric.ecore");
 			IReferenceModel inputMetamodel = modelFactory.newReferenceModel();
 
-			injector.inject(inputMetamodel, basePath + "ATL.ecore");
+			injector.inject(inputMetamodel, "file:///" + basePath + "ATL.ecore");
 
 			IModel inputModel = modelFactory.newModel(inputMetamodel);
 			IModel outModel = modelFactory.newModel(outputMetamodel);
@@ -267,12 +267,12 @@ public class ATLTransformationServiceImpl extends
 					new HashMap<String, Object>(),
 					(Object[]) getModulesList(basePath + "ATLMetric.asm"));
 
-			extractor.extract(outModel, "sampleCompany_Cut.xmi");
+			extractor.extract(outModel, "file:///" + basePath + "sampleCompany_Cut.xmi");
 			EMFModelFactory emfModelFactory = (EMFModelFactory) modelFactory;
 			emfModelFactory.unload((EMFReferenceModel) inputMetamodel);
 			emfModelFactory.unload((EMFReferenceModel) outputMetamodel);
 
-			List<Metric> result = getMetricList("sampleCompany_Cut.xmi",
+			List<Metric> result = getMetricList("file:///" + basePath + "sampleCompany_Cut.xmi",
 					AtlTransformation);
 			File temp2 = new File("sampleCompany_Cut.xmi");
 			metricRepository.save(result);
@@ -401,7 +401,7 @@ public class ATLTransformationServiceImpl extends
 		try {
 			ri.load(gridFileMediaService.getFileInputStream(atlTransformation),
 					null);
-			Resource xmiRes = rs.createResource(URI.createURI(outputFilePath));
+			Resource xmiRes = rs.createResource(URI.createURI("file:///" + outputFilePath));
 			xmiRes.getContents().addAll(ri.getContents());
 			xmiRes.save(null);
 			return outputFilePath;
